@@ -1,139 +1,134 @@
-// Import dari firebase.js
-import { db, ref, get, update, set } from './firebase.js';
+// Inisialisasi variabel global
+let dataStaf = [];
+const dbRef = firebase.database().ref('data-staf'); // Referensi ke Firebase
 
-// Variabel Global
-const tabelKaryawan = document.getElementById('tabel-karyawan');
-const formEdit = document.getElementById('form-edit');
-const overlay = document.getElementById('overlay');
-let idKaryawanAktif = "";
+// CEK LOGIN
+function cekLogin() {
+    const user = document.getElementById('username').value;
+    const pass = document.getElementById('password').value;
 
-// ======================
-// 1. TAMPILKAN SEMUA KARYAWAN
-// ======================
-async function tampilkanKaryawan() {
-  tabelKaryawan.innerHTML = `
-    <tr>
-      <th>NAMA KARYAWAN</th>
-      <th>POSISI</th>
-      <th>OMSET BULAN INI</th>
-      <th>GAJI SAAT INI</th>
-      <th>ACTION</th>
-    </tr>
-  `;
+    // Data akun login
+    const akunLogin = [
+        { username: "CEO", password: "whiterose123", role: "ceo" },
+        { username: "BLACKPINK", password: "12345", role: "staf" }
+    ];
 
-  const refKaryawan = ref(db, "Karyawan");
-  const snapshot = await get(refKaryawan);
-
-  if (snapshot.exists()) {
-    const dataKaryawan = snapshot.val();
-    for (let id in dataKaryawan) {
-      const karyawan = dataKaryawan[id];
-      
-      // Hitung gaji otomatis (bisa disesuaikan rumusnya)
-      // Contoh rumus: Gaji = 10% dari omset (bisa kamu ganti sesuai kebijakan)
-      const omsetAngka = parseInt(karyawan.omset.replace(/[^0-9]/g, ''));
-      const gajiHitung = omsetAngka * 0.10;
-      const gajiFormat = `Rp ${gajiHitung.toLocaleString('id-ID')}`;
-
-      const baris = document.createElement('tr');
-      baris.innerHTML = `
-        <td>${karyawan.nama}</td>
-        <td>${karyawan.posisi}</td>
-        <td>${karyawan.omset}</td>
-        <td>${gajiFormat}</td>
-        <td><button class="btn-edit" onclick="bukaFormEdit('${id}')">EDIT DATA</button></td>
-      `;
-      tabelKaryawan.appendChild(baris);
+    const akun = akunLogin.find(a => a.username === user && a.password === pass);
+    if (!akun) {
+        alert("Username/Password Salah!");
+        return;
     }
-  } else {
-    tabelKaryawan.innerHTML += `<tr><td colspan="5" style="text-align:center; color:#ff69b4;">Belum ada data karyawan</td></tr>`;
-  }
-}
 
-// ======================
-// 2. BUKA FORM EDIT
-// ======================
-window.bukaFormEdit = async function(id) {
-  idKaryawanAktif = id;
-  const refData = ref(db, `Karyawan/${id}`);
-  const snapshot = await get(refData);
-
-  if (snapshot.exists()) {
-    const karyawan = snapshot.val();
-    document.getElementById('edit-nama').value = karyawan.nama;
-    document.getElementById('edit-posisi').value = karyawan.posisi;
-    document.getElementById('edit-omset').value = karyawan.omset;
+    // Sembunyikan form login, tampilkan dashboard
+    document.querySelector('.login-box').style.display = 'none';
+    document.getElementById('dashboard').style.display = 'block';
     
-    // Tampilkan form dan overlay
-    formEdit.style.display = "block";
-    overlay.style.display = "block";
-  }
+    // Ambil data dari Firebase dan tampilkan
+    bacaDataDariFirebase(akun.role);
 }
 
-// ======================
-// 3. SIMPAN PERUBAHAN DATA
-// ======================
-window.simpanPerubahan = async function() {
-  const namaBaru = document.getElementById('edit-nama').value;
-  const posisiBaru = document.getElementById('edit-posisi').value;
-  const omsetBaru = document.getElementById('edit-omset').value;
+// BACA DATA DARI FIREBASE
+function bacaDataDariFirebase(role) {
+    dbRef.on('value', function(snapshot) {
+        dataStaf = [];
+        const data = snapshot.val();
+        
+        // Jika data ada di Firebase
+        if (data) {
+            Object.keys(data).forEach(key => {
+                dataStaf.push({
+                    id: key,
+                    nama: data[key].nama,
+                    posisi: data[key].posisi,
+                    omset: data[key].omset,
+                    gaji: data[key].gaji
+                });
+            });
+        } 
+        // Jika belum ada data, buat data awal
+        else {
+            dataStaf = [
+                { id: "1", nama: "Dea", posisi: "Team Creative", omset: "Rp 250.000.000", gaji: "Rp 50.000.000" },
+                { id: "2", nama: "Budi Santoso", posisi: "Marketing Executive", omset: "Rp 180.000.000", gaji: "Rp 35.000.000" },
+                { id: "3", nama: "Rina Wijaya", posisi: "Senior Marketing", omset: "Rp 300.000.000", gaji: "Rp 60.000.000" }
+            ];
+            // Simpan data awal ke Firebase
+            simpanSemuaDataKeFirebase();
+        }
 
-  // Validasi input
-  if (!namaBaru || !omsetBaru) {
-    alert("Nama dan Omset tidak boleh kosong!");
-    return;
-  }
-
-  const dataBaru = {
-    nama: namaBaru,
-    posisi: posisiBaru,
-    omset: omsetBaru
-  };
-
-  const refUpdate = ref(db, `Karyawan/${idKaryawanAktif}`);
-  await update(refUpdate, dataBaru);
-  
-  alert("Data berhasil diupdate! Gaji akan otomatis dihitung berdasarkan omset.");
-  tutupFormEdit();
-  tampilkanKaryawan();
+        // Tampilkan data ke tabel
+        tampilkanData(role);
+    });
 }
 
-// ======================
-// 4. TUTUP FORM EDIT
-// ======================
-window.tutupFormEdit = function() {
-  formEdit.style.display = "none";
-  overlay.style.display = "none";
+// TAMPILKAN DATA KE TABEL
+function tampilkanData(role) {
+    const tbody = document.getElementById('table-body');
+    tbody.innerHTML = '';
+
+    dataStaf.forEach(s => {
+        let action = '-';
+        if (role === 'ceo') {
+            action = `<button class="btn-edit" onclick="bukaEdit('${s.id}')">EDIT</button>`;
+        }
+
+        tbody.innerHTML += `
+            <tr>
+                <td>${s.nama}</td>
+                <td>${s.posisi}</td>
+                <td>${s.omset}</td>
+                <td>${s.gaji}</td>
+                <td>${action}</td>
+            </tr>
+        `;
+    });
 }
 
-// ======================
-// 5. TAMBAH KARYAWAN BARU
-// ======================
-window.tambahKaryawanBaru = async function() {
-  const nama = prompt("Masukkan Nama Karyawan Baru:");
-  const posisi = prompt("Masukkan Posisi Karyawan:");
-  
-  if (!nama || !posisi) {
-    alert("Nama dan Posisi harus diisi!");
-    return;
-  }
-
-  // Buat ID unik untuk karyawan baru
-  const idBaru = "karyawan_" + Date.now();
-  const dataBaru = {
-    nama: nama,
-    posisi: posisi,
-    omset: "Rp 0"
-  };
-
-  const refTambah = ref(db, `Karyawan/${idBaru}`);
-  await set(refTambah, dataBaru);
-  
-  alert("Karyawan baru berhasil ditambahkan!");
-  tampilkanKaryawan();
+// BUKA FORM EDIT
+function bukaEdit(id) {
+    const staf = dataStaf.find(s => s.id === id);
+    document.getElementById('edit-id').value = staf.id;
+    document.getElementById('edit-nama').value = staf.nama;
+    document.getElementById('edit-posisi').value = staf.posisi;
+    document.getElementById('edit-omset').value = staf.omset;
+    document.getElementById('edit-gaji').value = staf.gaji;
+    document.getElementById('edit-form').style.display = 'block';
 }
 
-// ======================
-// JALANKAN PROGRAM SAAT WEBSITE DIBUKA
-// ======================
-tampilkanKaryawan();
+// SIMPAN EDIT KE FIREBASE
+function simpanEdit() {
+    const id = document.getElementById('edit-id').value;
+    const stafBaru = {
+        nama: document.getElementById('edit-nama').value,
+        posisi: document.getElementById('edit-posisi').value,
+        omset: document.getElementById('edit-omset').value,
+        gaji: document.getElementById('edit-gaji').value
+    };
+
+    dbRef.child(id).set(stafBaru)
+        .then(() => {
+            alert("Data Berhasil Disimpan Secara Permanen!");
+            document.getElementById('edit-form').style.display = 'none';
+            bacaDataDariFirebase('ceo'); // Atau 'staf' sesuai peran
+        })
+        .catch((error) => {
+            alert("Gagal menyimpan data: " + error.message);
+        });
+}
+
+// SIMPAN SEMUA DATA AWAL KE FIREBASE
+function simpanSemuaDataKeFirebase() {
+    dataStaf.forEach(staf => {
+        dbRef.child(staf.id).set(staf);
+    });
+}
+
+// TUTUP FORM EDIT
+function tutupForm() {
+    document.getElementById('edit-form').style.display = 'none';
+}
+
+// JALANKAN FUNGSI SAAT WEBSITE DIBUKA
+window.onload = function() {
+    console.log("Sistem siap, tunggu koneksi Firebase...");
+};

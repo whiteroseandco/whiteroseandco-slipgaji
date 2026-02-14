@@ -1,0 +1,19 @@
+{
+  "Karyawan": {
+    "Rina Wijaya": {
+      "nama": "Rina Wijaya",
+      "posisi": "Senior Marketing Specialist",
+      "omset": "Rp 350.000.000"
+    },
+    "Budi Santoso": {
+      "nama": "Budi Santoso",
+      "posisi": "Marketing Executive",
+      "omset": "Rp 180.000.000"
+    },
+    "Dea": {
+      "nama": "Dea",
+      "posisi": "Team Creative",
+      "omset": "Rp 0"
+    }
+  }
+}

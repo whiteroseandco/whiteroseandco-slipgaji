@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WHITEROSE DIGITAL MARKETING</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    body {
+      background-color: #000;
+      color: #fff;
+      padding: 20px;
+    }
+
+    header {
+      background: linear-gradient(135deg, #000, #2c001e);
+      padding: 25px;
+      border-radius: 15px;
+      margin-bottom: 30px;
+      text-align: center;
+      box-shadow: 0 0 20px rgba(255, 105, 180, 0.3);
+    }
+
+    header h1 {
+      color: #ff69b4;
+      font-size: 1.8rem;
+    }
+
+    header p {
+      color: #f8c2d8;
+      font-size: 1rem;
+    }
+
+    .login-box {
+      background-color: #1a1a1a;
+      max-width: 400px;
+      margin: 0 auto 30px;
+      padding: 25px;
+      border-radius: 15px;
+      border: 2px solid #ff69b4;
+    }
+
+    .login-box h2 {
+      color: #ff69b4;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .login-box input {
+      width: 100%;
+      padding: 12px;
+      margin: 8px 0;
+      background-color: #222;
+      border: 2px solid #ff69b4;
+      border-radius: 8px;
+      color: #fff;
+      font-size: 1rem;
+    }
+
+    .btn-login {
+      width: 100%;
+      padding: 12px;
+      background-color: #ff69b4;
+      color: #000;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+
+    .btn-login:hover {
+      background-color: #ff1493;
+    }
+
+    .dashboard {
+      display: none;
+      background-color: #1a1a1a;
+      padding: 25px;
+      border-radius: 15px;
+      box-shadow: 0 0 20px rgba(255, 105, 180, 0.3);
+    }
+
+    .dashboard h2 {
+      color: #ff69b4;
+      margin-bottom: 20px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    th {
+      background-color: #ff69b4;
+      color: #000;
+      padding: 15px;
+      text-align: left;
+      font-weight: 600;
+    }
+
+    td {
+      padding: 15px;
+      border-bottom: 1px solid #333;
+      color: #fff;
+    }
+
+    tr:hover td {
+      background-color: #222;
+      color: #ff69b4;
+    }
+
+    .btn-edit {
+      background-color: #ff69b4;
+      color: #000;
+      border: none;
+      padding: 8px 15px;
+      border-radius: 6px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .btn-edit:hover {
+      background-color: #ff1493;
+    }
+
+    .edit-form {
+      display: none;
+      background-color: #1a1a1a;
+      padding: 25px;
+      border-radius: 15px;
+      margin-top: 20px;
+      border: 2px solid #ff69b4;
+    }
+
+    .edit-form input {
+      width: 100%;
+      padding: 10px;
+      margin: 8px 0;
+      background-color: #222;
+      border: 2px solid #ff69b4;
+      border-radius: 8px;
+      color: #fff;
+    }
+
+    .btn-simpan, .btn-batal {
+      background-color: #ff69b4;
+      color: #000;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-right: 10px;
+    }
+
+    .btn-batal {
+      background-color: #333;
+      color: #fff;
+      border: 2px solid #ff69b4;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>WHITEROSE DIGITAL MARKETING</h1>
+    <p>Sistem Data & Gaji Staf</p>
+  </header>
+
+  <!-- FORM LOGIN -->
+  <div class="login-box">
+    <h2>SILAHKAN LOGIN</h2>
+    <input type="text" id="username" placeholder="Username">
+    <input type="password" id="password" placeholder="Password">
+    <button class="btn-login" onclick="cekLogin()">LOGIN</button>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div class="dashboard" id="dashboard">
+    <h2>DATA STAF</h2>
+    <table>
+      <tr>
+        <th>NAMA STAF</th>
+        <th>POSISI</th>
+        <th>OMSET BULAN INI</th>
+        <th>GAJI STAF</th>
+        <th>ACTION</th>
+      </tr>
+      <tbody id="table-body"></tbody>
+    </table>
+
+    <!-- FORM EDIT -->
+    <div class="edit-form" id="edit-form">
+      <h3 style="color:#ff69b4; margin-bottom:15px;">EDIT DATA STAF</h3>
+      <input type="hidden" id="edit-id">
+      <input type="text" id="edit-nama" placeholder="Nama Staf">
+      <input type="text" id="edit-posisi" placeholder="Posisi">
+      <input type="text" id="edit-omset" placeholder="Omset Bulan Ini">
+      <input type="text" id="edit-gaji" placeholder="Gaji Staf">
+      <button class="btn-simpan" onclick="simpanEdit()">SIMPAN</button>
+      <button class="btn-batal" onclick="tutupForm()">BATAL</button>
+    </div>
+  </div>
+
+  <script>
+    // DATA STAF
+    let dataStaf = [
+      { id: 1, nama: "Dea", posisi: "Team Creative", omset: "Rp 250.000.000", gaji: "Rp 50.000.000" },
+      { id: 2, nama: "Budi Santoso", posisi: "Marketing Executive", omset: "Rp 180.000.000", gaji: "Rp 35.000.000" },
+      { id: 3, nama: "Rina Wijaya", posisi: "Senior Marketing", omset: "Rp 300.000.000", gaji: "Rp 60.000.000" }
+    ];
+
+    // CEK LOGIN
+    function cekLogin() {
+      const user = document.getElementById('username').value;
+      const pass = document.getElementById('password').value;
+      
+      const akun = [
+        { username: "CEO", password: "whiterose123", role: "ceo" },
+        { username: "BLACKPINK", password: "12345", role: "staf" }
+      ].find(a => a.username === user && a.password === pass);
+
+      if (!akun) {
+        alert("Username/Password Salah!");
+        return;
+      }
+
+      document.querySelector('.login-box').style.display = 'none';
+      document.getElementById('dashboard').style.display = 'block';
+      tampilkanData(akun.role);
+    }
+
+    // TAMPILKAN DATA
+    function tampilkanData(role) {
+      const tbody = document.getElementById('table-body');
+      tbody.innerHTML = '';
+      
+      dataStaf.forEach(s => {
+        let action = '-';
+        if (role === 'ceo') {
+          action = `<button class="btn-edit" onclick="bukaEdit(${s.id})">EDIT</button>`;
+        }
+
+        tbody.innerHTML += `
+          <tr>
+            <td>${s.nama}</td>
+            <td>${s.posisi}</td>
+            <td>${s.omset}</td>
+            <td>${s.gaji}</td>
+            <td>${action}</td>
+          </tr>
+        `;
+      });
+    }
+
+    // BUKA FORM EDIT
+    function bukaEdit(id) {
+      const staf = dataStaf.find(s => s.id === id);
+      document.getElementById('edit-id').value = id;
+      document.getElementById('edit-nama').value = staf.nama;
+      document.getElementById('edit-posisi').value = staf.posisi;
+      document.getElementById('edit-omset').value = staf.omset;
+      document.getElementById('edit-gaji').value = staf.gaji;
+      document.getElementById('edit-form').style.display = 'block';
+    }
+
+    // SIMPAN EDIT
+    function simpanEdit() {
+      const id = document.getElementById('edit-id').value;
+      const index = dataStaf.findIndex(s => s.id == id);
+      
+      dataStaf[index] = {
+        id: parseInt(id),
+        nama: document.getElementById('edit-nama').value,
+        posisi: document.getElementById('edit-posisi').value,
+        omset: document.getElementById('edit-omset').value,
+        gaji: document.getElementById('edit-gaji').value
+      };
+
+      alert("Data Berhasil Disimpan!");
+      tutupForm();
+      tampilkanData('ceo');
+    }
+
+    // TUTUP FORM
+    function tutupForm() {
+      document.getElementById('edit-form').style.display = 'none';
+    }
+  </script>
+</body>
+</html>
+    
+  

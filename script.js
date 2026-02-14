@@ -1,134 +1,85 @@
-// Inisialisasi variabel global
-let dataStaf = [];
-const dbRef = firebase.database().ref('data-staf'); // Referensi ke Firebase
+// INISIALISASI
+let currentUser = null;
+const db = firebase.database().ref('staffData');
 
-// CEK LOGIN
-function cekLogin() {
+// LOGIN
+function login() {
     const user = document.getElementById('username').value;
     const pass = document.getElementById('password').value;
 
-    // Data akun login
-    const akunLogin = [
-        { username: "CEO", password: "whiterose123", role: "ceo" },
-        { username: "BLACKPINK", password: "12345", role: "staf" }
+    // DATA AKUN
+    const accounts = [
+        { username: "CEO", password: "whiterose123", role: "admin" },
+        { username: "BLACKPINK", password: "bp123", role: "staff" }
     ];
 
-    const akun = akunLogin.find(a => a.username === user && a.password === pass);
-    if (!akun) {
-        alert("Username/Password Salah!");
-        return;
+    const found = accounts.find(acc => acc.username === user && acc.password === pass);
+    if (found) {
+        currentUser = found;
+        document.getElementById('loginSection').style.display = 'none';
+        document.getElementById('dashboardSection').style.display = 'block';
+        loadData();
+    } else {
+        alert("Username/Password SALAH!");
     }
-
-    // Sembunyikan form login, tampilkan dashboard
-    document.querySelector('.login-box').style.display = 'none';
-    document.getElementById('dashboard').style.display = 'block';
-    
-    // Ambil data dari Firebase dan tampilkan
-    bacaDataDariFirebase(akun.role);
 }
 
-// BACA DATA DARI FIREBASE
-function bacaDataDariFirebase(role) {
-    dbRef.on('value', function(snapshot) {
-        dataStaf = [];
+// AMBIL DATA DARI FIREBASE
+function loadData() {
+    db.on('value', snapshot => {
         const data = snapshot.val();
-        
-        // Jika data ada di Firebase
+        const table = document.getElementById('staffData');
+        table.innerHTML = '';
+
         if (data) {
             Object.keys(data).forEach(key => {
-                dataStaf.push({
-                    id: key,
-                    nama: data[key].nama,
-                    posisi: data[key].posisi,
-                    omset: data[key].omset,
-                    gaji: data[key].gaji
-                });
+                const staff = data[key];
+                table.innerHTML += `
+                    <tr>
+                        <td>${staff.name}</td>
+                        <td>${staff.position}</td>
+                        <td>${staff.omset}</td>
+                        <td>${staff.salary}</td>
+                        <td><button class="edit-btn" onclick="openEdit('${key}')">EDIT</button></td>
+                    </tr>
+                `;
             });
-        } 
-        // Jika belum ada data, buat data awal
-        else {
-            dataStaf = [
-                { id: "1", nama: "Dea", posisi: "Team Creative", omset: "Rp 250.000.000", gaji: "Rp 50.000.000" },
-                { id: "2", nama: "Budi Santoso", posisi: "Marketing Executive", omset: "Rp 180.000.000", gaji: "Rp 35.000.000" },
-                { id: "3", nama: "Rina Wijaya", posisi: "Senior Marketing", omset: "Rp 300.000.000", gaji: "Rp 60.000.000" }
-            ];
-            // Simpan data awal ke Firebase
-            simpanSemuaDataKeFirebase();
         }
-
-        // Tampilkan data ke tabel
-        tampilkanData(role);
     });
 }
 
-// TAMPILKAN DATA KE TABEL
-function tampilkanData(role) {
-    const tbody = document.getElementById('table-body');
-    tbody.innerHTML = '';
-
-    dataStaf.forEach(s => {
-        let action = '-';
-        if (role === 'ceo') {
-            action = `<button class="btn-edit" onclick="bukaEdit('${s.id}')">EDIT</button>`;
-        }
-
-        tbody.innerHTML += `
-            <tr>
-                <td>${s.nama}</td>
-                <td>${s.posisi}</td>
-                <td>${s.omset}</td>
-                <td>${s.gaji}</td>
-                <td>${action}</td>
-            </tr>
-        `;
+// FORM EDIT
+let editKey = null;
+function openEdit(key) {
+    editKey = key;
+    db.child(key).once('value', snapshot => {
+        const staff = snapshot.val();
+        document.getElementById('editName').value = staff.name;
+        document.getElementById('editPosition').value = staff.position;
+        document.getElementById('editOmset').value = staff.omset;
+        document.getElementById('editSalary').value = staff.salary;
+        document.getElementById('editForm').style.display = 'block';
     });
-}
-
-// BUKA FORM EDIT
-function bukaEdit(id) {
-    const staf = dataStaf.find(s => s.id === id);
-    document.getElementById('edit-id').value = staf.id;
-    document.getElementById('edit-nama').value = staf.nama;
-    document.getElementById('edit-posisi').value = staf.posisi;
-    document.getElementById('edit-omset').value = staf.omset;
-    document.getElementById('edit-gaji').value = staf.gaji;
-    document.getElementById('edit-form').style.display = 'block';
 }
 
 // SIMPAN EDIT KE FIREBASE
-function simpanEdit() {
-    const id = document.getElementById('edit-id').value;
-    const stafBaru = {
-        nama: document.getElementById('edit-nama').value,
-        posisi: document.getElementById('edit-posisi').value,
-        omset: document.getElementById('edit-omset').value,
-        gaji: document.getElementById('edit-gaji').value
+function saveEdit() {
+    const data = {
+        name: document.getElementById('editName').value,
+        position: document.getElementById('editPosition').value,
+        omset: document.getElementById('editOmset').value,
+        salary: document.getElementById('editSalary').value
     };
-
-    dbRef.child(id).set(stafBaru)
-        .then(() => {
-            alert("Data Berhasil Disimpan Secara Permanen!");
-            document.getElementById('edit-form').style.display = 'none';
-            bacaDataDariFirebase('ceo'); // Atau 'staf' sesuai peran
-        })
-        .catch((error) => {
-            alert("Gagal menyimpan data: " + error.message);
-        });
+    db.child(editKey).update(data);
+    document.getElementById('editForm').style.display = 'none';
+    alert("DATA BERHASIL DISIMPAN PERMANEN!");
 }
 
-// SIMPAN SEMUA DATA AWAL KE FIREBASE
-function simpanSemuaDataKeFirebase() {
-    dataStaf.forEach(staf => {
-        dbRef.child(staf.id).set(staf);
-    });
+function closeEditForm() {
+    document.getElementById('editForm').style.display = 'none';
 }
 
-// TUTUP FORM EDIT
-function tutupForm() {
-    document.getElementById('edit-form').style.display = 'none';
+// LOAD DATA SAAT DASHBOARD BUKA
+function loadData() {
+    loadData();
 }
-
-// JALANKAN FUNGSI SAAT WEBSITE DIBUKA
-window.onload = function() {
-    console.log("Sistem siap, tunggu koneksi Firebase...");
-};
